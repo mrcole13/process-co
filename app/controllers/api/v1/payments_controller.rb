@@ -27,6 +27,7 @@ class Api::V1::PaymentsController < ApplicationController
       resident.save!
     end    
     amount_string = number_to_currency(amount.to_f / 100, :unit => "$")
+    #TODO: Decide what to name the product
     product_name = "Payment of " + amount_string.to_s + " to " + property.id.to_s + " for " + resident.id.to_s#Stripe::Product.create({name: resident_id})
 
     #Create Stripe price object
@@ -37,7 +38,8 @@ class Api::V1::PaymentsController < ApplicationController
           product_data: {name: product_name},
         })
       #Create PaymentLink via Stripe w/ property as destination
-      fee = amount.to_i * 0.05    
+      fee = amount.to_i * 0.05 #TODO: Decide where this is stored and how it's pulled   
+      #TODO: How to transfer to multiple connected accounts
       response = Stripe::PaymentLink.create({
         line_items: [
           {
@@ -46,21 +48,18 @@ class Api::V1::PaymentsController < ApplicationController
           },
         ],
         application_fee_amount: fee.to_i,
-        transfer_data: {destination: 'acct_1PP6ohLK314QslDW'},
+        transfer_data: {destination: 'acct_1PP6ohLK314QslDW'},#TODO: Decide how this is stored and how it's pulled
       })
       #Save payment object to DB
       payment = Payment.new
       payment.property = property
       payment.resident = resident
       payment.amount = amount
-      payment.status = "paymentLink"
+      payment.status = "pending"
       payment.payment_link = response.url
       payment.link_id = response.id
       payment.is_full_payment = params[:is_full_payment] 
       payment.save
-
-      #return json
-      render json: {payment_link: response.url}, status: 200
     rescue Stripe::StripeError => e
       # Handle other Stripe errors
       render json: {error: e.message}, status: :unprocessable_entity
@@ -68,6 +67,9 @@ class Api::V1::PaymentsController < ApplicationController
       # Handle other unexpected errors
       render json: {error: "An unexpected error occurred."}, status: :internal_server_error
     end
+    #return json
+    render json: {payment_link: response.url}, status: 200
+
   end
 
   private

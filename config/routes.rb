@@ -6,6 +6,7 @@ Rails.application.routes.draw do
       resources :payments, only: [:index, :show, :create]
     end
   end
+  resources :webhooks, only: [:create]
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
