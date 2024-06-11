@@ -2,6 +2,7 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       resources :properties, only: [:index, :show, :create]
+      get "payments/payment_link", to: "payments#payment_link"
       resources :payments, only: [:index, :show, :create]
     end
   end

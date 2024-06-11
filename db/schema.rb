@@ -10,16 +10,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2024_06_10_152407) do
+ActiveRecord::Schema[7.2].define(version: 2024_06_11_163424) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
   create_table "payments", force: :cascade do |t|
-    t.string "property_id"
     t.string "amount"
-    t.string "resident_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "status"
+    t.string "payment_link"
+    t.string "link_id"
+    t.boolean "is_full_payment"
+    t.bigint "property_id", null: false
+    t.bigint "resident_id", null: false
+    t.index ["property_id"], name: "index_payments_on_property_id"
+    t.index ["resident_id"], name: "index_payments_on_resident_id"
   end
 
   create_table "properties", force: :cascade do |t|
@@ -27,10 +33,18 @@ ActiveRecord::Schema[7.2].define(version: 2024_06_10_152407) do
     t.string "stripe_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "buzz_id"
   end
 
   create_table "residents", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "buzz_id"
+    t.bigint "property_id", null: false
+    t.index ["property_id"], name: "index_residents_on_property_id"
   end
+
+  add_foreign_key "payments", "properties"
+  add_foreign_key "payments", "residents"
+  add_foreign_key "residents", "properties"
 end
