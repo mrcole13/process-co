@@ -38,7 +38,7 @@ class Api::V1::PaymentsController < ApplicationController
           product_data: {name: product_name},
         })
       #Create PaymentLink via Stripe w/ property as destination
-      fee = amount.to_i * 0.05 #TODO: Decide where this is stored and how it's pulled   
+      fee = amount.to_i * 100/property.fee_percentage
       #TODO: How to transfer to multiple connected accounts
       response = Stripe::PaymentLink.create({
         line_items: [
@@ -48,7 +48,7 @@ class Api::V1::PaymentsController < ApplicationController
           },
         ],
         application_fee_amount: fee.to_i,
-        transfer_data: {destination: 'acct_1PP6ohLK314QslDW'},#TODO: Decide how this is stored and how it's pulled
+        transfer_data: {destination: property.stripe_id},
       })
       #Save payment object to DB
       payment = Payment.new
