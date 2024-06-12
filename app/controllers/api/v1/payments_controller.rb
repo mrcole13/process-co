@@ -13,10 +13,10 @@ class Api::V1::PaymentsController < ApplicationController
     property_id = params[:property_id]
     amount = params[:amount]
 
-    #find or create Property with the id passed in
+    #find Property with the id passed in, return error if not created
     property = Property.find_by(buzz_id: property_id)
     if !property.present?
-      property = Property.create!(buzz_id: property_id)
+      return render json: {error: 'Property has not been connected yet'}, status: :internal_server_error
     end
 
     #find or create Resident with the id passed in
@@ -26,20 +26,20 @@ class Api::V1::PaymentsController < ApplicationController
       resident.property = property
       resident.save!
     end    
-    amount_string = number_to_currency(amount.to_f / 100, :unit => "$")
     #TODO: Decide what to name the product
-    product_name = "Payment of " + amount_string.to_s + " to " + property.id.to_s + " for " + resident.id.to_s#Stripe::Product.create({name: resident_id})
-
+    product_name = "Payment of " + amount + " to " + property.id.to_s + " for " + resident.id.to_s#Stripe::Product.create({name: resident_id})
     #Create Stripe price object
     begin
       price = Stripe::Price.create({
           currency: 'usd',
-          unit_amount: amount,
+          unit_amount: amount.to_i * 100,
           product_data: {name: product_name},
         })
       #Create PaymentLink via Stripe w/ property as destination
-      fee = amount.to_i * 100/property.fee_percentage
-      #TODO: How to transfer to multiple connected accounts
+      fee = amount.to_i * property.fee_percentage.to_i/100
+      if property.property_manager.present?
+        fee = fee + (amount.to_i * property.property_manager.fee_percentage.to_i/100)
+      end
       response = Stripe::PaymentLink.create({
         line_items: [
           {
@@ -47,7 +47,7 @@ class Api::V1::PaymentsController < ApplicationController
             quantity: 1,
           },
         ],
-        application_fee_amount: fee.to_i,
+        application_fee_amount: fee * 100,
         transfer_data: {destination: property.stripe_id},
       })
       #Save payment object to DB
@@ -59,17 +59,17 @@ class Api::V1::PaymentsController < ApplicationController
       payment.payment_link = response.url
       payment.link_id = response.id
       payment.is_full_payment = params[:is_full_payment] 
+      payment.fee = fee
       payment.save
     rescue Stripe::StripeError => e
       # Handle other Stripe errors
-      render json: {error: e.message}, status: :unprocessable_entity
+      return render json: {error: e.message}, status: :unprocessable_entity
     rescue => e
       # Handle other unexpected errors
-      render json: {error: "An unexpected error occurred."}, status: :internal_server_error
+      return render json: {error: "An unexpected error occurred."}, status: :internal_server_error
     end
     #return json
-    render json: {payment_link: response.url}, status: 200
-
+    return render json: {payment_link: response.url}, status: 200
   end
 
   private

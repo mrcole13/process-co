@@ -1,5 +1,5 @@
 class WebhooksController < ApplicationController
-
+    include ActionView::Helpers::NumberHelper
     def create
         payload = request.body.read
         sig_header = request.env['HTTP_STRIPE_SIGNATURE']
@@ -26,15 +26,30 @@ class WebhooksController < ApplicationController
                 payment.status = event_object.payment_status
                 payment.save
             end
-            #TODO: Transfer money to property management connected account, optional
-            Stripe::Transfer.create({
-                amount: 400,
-                currency: 'usd',
-                destination: 'acct_1MTfjCQ9PRzxEwkZ',#TODO: Where to grab prop mgmnt id?
-                transfer_group: 'ORDER_95',#TODO: Do I need this? Perhaps this is just property name or resident id?
-            })
+            #Transfer money to property management connected account, if exists
+            property = payment.property    
+            if property.property_manager.present?  
+                transfer_amount = payment.amount.to_i * property.property_manager.fee_percentage.to_i/100
+                Stripe::Transfer.create({
+                    amount: transfer_amount * 100,
+                    currency: 'usd',
+                    destination: property.property_manager.stripe_id,
+                    transfer_group: 'ORDER_95',#TODO: Do I need this? Perhaps this is just property name or resident id?
+                })
+                puts 'Transfer Succeeded!'
+            end
             #TODO: CALL BUZZ ENDPOINT HERE
             puts 'Payment Succeeded!'
+        when 'account.application.authorized'
+            stripe_id = event.account
+            property = Property.find_by(stripe_id: stripe_id)
+            if !property.present?
+                stripe_account = Stripe::Account.retrieve(stripe_id)
+                property = Property.new(stripe_id: stripe_id)
+                property.name = stripe_account.business_profile.name
+                property.save
+            end  
+            puts 'Property Connected Successfully'
         else
           puts "Unhandled event type: #{event.type}"
         end

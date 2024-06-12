@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2024_06_11_212911) do
+ActiveRecord::Schema[7.2].define(version: 2024_06_12_185640) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -24,6 +24,7 @@ ActiveRecord::Schema[7.2].define(version: 2024_06_11_212911) do
     t.boolean "is_full_payment"
     t.bigint "property_id", null: false
     t.bigint "resident_id", null: false
+    t.integer "fee"
     t.index ["property_id"], name: "index_payments_on_property_id"
     t.index ["resident_id"], name: "index_payments_on_resident_id"
   end
@@ -35,6 +36,7 @@ ActiveRecord::Schema[7.2].define(version: 2024_06_11_212911) do
     t.datetime "updated_at", null: false
     t.string "buzz_id"
     t.string "fee_percentage"
+    t.integer "property_manager_id"
   end
 
   create_table "residents", force: :cascade do |t|
@@ -47,5 +49,6 @@ ActiveRecord::Schema[7.2].define(version: 2024_06_11_212911) do
 
   add_foreign_key "payments", "properties"
   add_foreign_key "payments", "residents"
+  add_foreign_key "properties", "properties", column: "property_manager_id"
   add_foreign_key "residents", "properties"
 end
