@@ -27,18 +27,29 @@ class WebhooksController < ApplicationController
                 payment.save
             end
             #Transfer money to property management connected account, if exists
-            property = payment.property    
-            if property.property_manager.present?  
-                transfer_amount = payment.amount.to_i * property.property_manager.fee_percentage.to_i/100
-                Stripe::Transfer.create({
-                    amount: transfer_amount * 100,
-                    currency: 'usd',
-                    destination: property.property_manager.stripe_id,
-                    transfer_group: 'ORDER_95',#TODO: Do I need this? Perhaps this is just property name or resident id?
-                })
-                puts 'Transfer Succeeded!'
-            end
-            #TODO: CALL BUZZ ENDPOINT HERE
+            #This will happen on a monthly reconciliation basis
+            #property = payment.property    
+            #if property.property_manager.present?  
+                #transfer_amount = payment.amount.to_i * property.property_manager.fee_percentage.to_i/100
+                #Stripe::Transfer.create({
+                    #amount: transfer_amount * 100,
+                    #currency: 'usd',
+                    #destination: property.property_manager.stripe_id,
+                    #transfer_group: 'ORDER_95',#TODO: Do I need this? Perhaps this is just property name or resident id?
+                #})
+                #puts 'Transfer Succeeded!'
+            #end
+            #Post response to Buzz
+            resident = payment.resident
+            response = HTTParty.post(ENV['API_URL'] + 'resident-payment/' + payment.resident.buzz_id, 
+                body: { 
+                    unit_occupancy_id: resident.unit_occupancy_id,
+                    property_id: payment.property.buzz_id,
+                    status: payment.status,
+                    amount: payment.amount,
+                    created_at: payment.created_at
+                }.to_json, 
+                headers: { 'Content-Type' => 'application/json' })
             puts 'Payment Succeeded!'
         when 'account.application.authorized'
             stripe_id = event.account
@@ -50,10 +61,34 @@ class WebhooksController < ApplicationController
                 property.save
             end  
             puts 'Property Connected Successfully'
+        when 'payment_intent.created'
+            puts "PAYMENT INTENT PROCESSESING"
+            amount = event.data.object.amount/100
+            type = event.data.object.payment_method_types
+            amount_with_fee = calculate_fee(amount, type.first)           
+            #Stripe::PaymentIntent.update(
+                #event.data.object.id,
+                #{amount: amount_with_fee * 100},
+            #)
+            puts 'Updated Payment Intent With Fee'
         else
           puts "Unhandled event type: #{event.type}"
         end
     
         render json: { message: :success }
+    end
+
+    private 
+
+    def calculate_fee(amount, type)
+        if type == 'card'        
+            processing_fee = (amount * 0.029) + 0.30
+        else
+            processing_fee = (amount * 0.008)
+            if processing_fee > 5
+                processing_fee = 5
+            end
+        end
+        return amount + processing_fee
     end
 end
