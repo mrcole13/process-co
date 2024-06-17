@@ -1,4 +1,4 @@
-class WebhooksController < ApplicationController
+class Connect::WebhooksController < ApplicationController
     include ActionView::Helpers::NumberHelper
     def create
         payload = request.body.read
