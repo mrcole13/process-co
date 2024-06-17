@@ -17,7 +17,8 @@ class Api::V1::PaymentsController < ApplicationController
     #find Property with the id passed in, return error if not created
     property = Property.find_by(buzz_id: property_id)
     if !property.present?
-      #TODO: send email when this happens
+      #send email letting team know to get this property setup
+      email = PropertyMissingMailer.missing_property_email(property_id)
       return render json: {error: 'Property has not been connected yet'}, status: :internal_server_error
     end
 
