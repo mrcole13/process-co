@@ -10,6 +10,7 @@ class PropertyMissingMailer < ApplicationMailer
         ms_email.add_subject("Property Not Yet Setup")
         ms_email.add_text("Property with Buzz ID: " + property_id + " is not yet setup in Stripe. Please reach out to ensure it's setup")        
         # Send the email
+        puts "EMAIL"
         ms_email.send
       end
 end

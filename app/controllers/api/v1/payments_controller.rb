@@ -19,6 +19,7 @@ class Api::V1::PaymentsController < ApplicationController
     if !property.present?
       #send email letting team know to get this property setup
       email = PropertyMissingMailer.missing_property_email(property_id)
+      puts email
       return render json: {error: 'Property has not been connected yet'}, status: :internal_server_error
     end
 

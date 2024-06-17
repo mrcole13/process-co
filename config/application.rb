@@ -28,5 +28,13 @@ module ProcessCo
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+    config.action_mailer.delivery_method = :smtp
+    config.action_mailer.smtp_settings = {
+      :address   => 'smtp.mailersend.net',
+      :port      => 587,
+      :user_name => ENV['MAILSEND_FROM'],
+      :password  => ENV['MAILERSEND_API_TOKEN'],
+      :starttls => true
+    }
   end
 end
