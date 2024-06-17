@@ -53,11 +53,13 @@ class WebhooksController < ApplicationController
             puts 'Payment Succeeded!'
         when 'account.application.authorized'
             stripe_id = event.account
+            puts stripe_id
             property = Property.find_by(stripe_id: stripe_id)
             if !property.present?
                 stripe_account = Stripe::Account.retrieve(stripe_id)
                 property = Property.new(stripe_id: stripe_id)
                 property.name = stripe_account.business_profile.name
+                puts stripe_account.business_profile.name
                 property.save
             end  
             puts 'Property Connected Successfully'
