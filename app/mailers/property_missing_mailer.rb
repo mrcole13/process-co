@@ -6,7 +6,7 @@ class PropertyMissingMailer < ApplicationMailer
         ms_email = Mailersend::Email.new        
         # Add parameters
         ms_email.add_recipients("email" => "about@rentergopay.com", "name" => "RenterGoPay")
-        ms_email.add_from("email" => "MS_kAWsmg@trial-pr9084zy2nxgw63d.mlsender.net", "name" => "RenterGoPay")
+        ms_email.add_from("email" => ENV['MAILSEND_FROM'], "name" => "RenterGoPay")
         ms_email.add_subject("Property Not Yet Setup")
         ms_email.add_text("Property with Buzz ID: " + property_id + " is not yet setup in Stripe. Please reach out to ensure it's setup")        
         # Send the email
