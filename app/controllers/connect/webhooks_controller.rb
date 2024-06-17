@@ -1,0 +1,38 @@
+class WebhooksController < ApplicationController
+    include ActionView::Helpers::NumberHelper
+    def create
+        payload = request.body.read
+        sig_header = request.env['HTTP_STRIPE_SIGNATURE']
+        event = nil
+        begin
+          event = Stripe::Webhook.construct_event(
+            payload, sig_header, ENV['STRIPE_CONNECT_ENDPOINT_SECRET']
+          )
+        rescue JSON::ParserError => e
+          # Invalid payload
+          render json: { error: { message: e.message }}, status: :bad_request
+          return
+        rescue Stripe::SignatureVerificationError => e
+          # Invalid signature
+          render json: { error: { message: e.message, extra: "Sig verification failed" }}, status: :bad_request
+          return
+        end
+        # Handle the event
+        case event.type        
+        when 'account.application.authorized'
+            stripe_id = event.account
+            puts stripe_id
+            property = Property.find_by(stripe_id: stripe_id)
+            if !property.present?
+                stripe_account = Stripe::Account.retrieve(stripe_id)
+                property = Property.new(stripe_id: stripe_id)
+                property.name = stripe_account.business_profile.name
+                puts stripe_account.business_profile.name
+                property.save
+            end  
+            puts 'Property Connected Successfully'
+        end
+    
+        render json: { message: :success }
+    end
+end
