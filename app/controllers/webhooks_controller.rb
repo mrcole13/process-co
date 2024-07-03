@@ -42,15 +42,19 @@ class WebhooksController < ApplicationController
             #Post response to Buzz
             resident = payment.resident
             api_url = ENV['API_URL'].sub '${residentID}', payment.resident.buzz_id
-            response = HTTParty.post(api_url, 
-                body: { 
-                    unit_occupancy_id: resident.unit_occupancy_id,
-                    property_id: payment.property.buzz_id,
-                    status: payment.status,
-                    amount: payment.amount,
-                    created_at: payment.created_at
-                }.to_json, 
-                headers: { 'Content-Type' => 'application/json' })
+            begin
+                response = HTTParty.post(api_url, 
+                    body: { 
+                        unit_occupancy_id: resident.unit_occupancy_id,
+                        property_id: payment.property.buzz_id,
+                        status: payment.status,
+                        amount: payment.amount,
+                        created_at: payment.created_at
+                    }.to_json, 
+                    headers: { 'Content-Type' => 'application/json' })
+            rescue => e
+                render json: {error: "An unexpected error occurred."}, status: :internal_server_error
+            end
             puts 'Payment Succeeded!'
         when 'payment_intent.created'
             puts "PAYMENT INTENT PROCESSESING"
