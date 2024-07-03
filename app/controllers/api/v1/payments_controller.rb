@@ -94,7 +94,7 @@ class Api::V1::PaymentsController < ApplicationController
   private
 
   def payment_params
-    params.permit(:resident_id, :amount, :property_id, :is_full_payment, :first_name, :last_name, :auth_token)
+    params.permit(:resident_id, :amount, :property_id, :is_full_payment, :first_name, :last_name, :auth_token, :unit_occupancy_id)
   end
 
   def verify_token
