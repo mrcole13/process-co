@@ -41,7 +41,8 @@ class WebhooksController < ApplicationController
             #end
             #Post response to Buzz
             resident = payment.resident
-            response = HTTParty.post(ENV['API_URL'] + 'resident-payment/' + payment.resident.buzz_id, 
+            api_url = ENV['API_URL'].sub '${residentID}', payment.resident.buzz_id
+            response = HTTParty.post(api_url, 
                 body: { 
                     unit_occupancy_id: resident.unit_occupancy_id,
                     property_id: payment.property.buzz_id,

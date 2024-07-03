@@ -9,7 +9,7 @@ class Api::V1::PaymentsController < ApplicationController
   def show
   end
 
-  def payment_link
+  def payment_link   
     resident_id = params[:resident_id]
     property_id = params[:property_id]
     amount = params[:amount]
