@@ -19,43 +19,45 @@ class WebhooksController < ApplicationController
         end
         # Handle the event
         case event.type
-        when 'checkout.session.async_payment_succeeded'
+        when 'checkout.session.async_payment_succeeded', 'checkout.session.completed'
             event_object = event.data.object
-            payment = Payment.find_by(link_id: event_object.payment_link)
-            if payment.present?
-                payment.status = event_object.payment_status
-                payment.save
+            if event_object.payment_status == 'paid'
+                payment = Payment.find_by(link_id: event_object.payment_link)
+                if payment.present?
+                    payment.status = event_object.payment_status
+                    payment.save
+                end
+                #Transfer money to property management connected account, if exists
+                #This will happen on a monthly reconciliation basis
+                #property = payment.property    
+                #if property.property_manager.present?  
+                    #transfer_amount = payment.amount.to_i * property.property_manager.fee_percentage.to_i/100
+                    #Stripe::Transfer.create({
+                        #amount: transfer_amount * 100,
+                        #currency: 'usd',
+                        #destination: property.property_manager.stripe_id,
+                        #transfer_group: 'ORDER_95',#TODO: Do I need this? Perhaps this is just property name or resident id?
+                    #})
+                    #puts 'Transfer Succeeded!'
+                #end
+                #Post response to Buzz
+                resident = payment.resident
+                api_url = ENV['API_URL'].sub '${residentID}', payment.resident.buzz_id
+                begin
+                    response = HTTParty.post(api_url, 
+                        body: { 
+                            unit_occupancy_id: resident.unit_occupancy_id,
+                            property_id: payment.property.buzz_id,
+                            status: payment.status,
+                            amount: payment.amount,
+                            created_at: payment.created_at
+                        }.to_json, 
+                        headers: { 'Content-Type' => 'application/json' })
+                rescue => e
+                    render json: {error: "An unexpected error occurred."}, status: :internal_server_error
+                end
+                puts 'Payment Succeeded!'
             end
-            #Transfer money to property management connected account, if exists
-            #This will happen on a monthly reconciliation basis
-            #property = payment.property    
-            #if property.property_manager.present?  
-                #transfer_amount = payment.amount.to_i * property.property_manager.fee_percentage.to_i/100
-                #Stripe::Transfer.create({
-                    #amount: transfer_amount * 100,
-                    #currency: 'usd',
-                    #destination: property.property_manager.stripe_id,
-                    #transfer_group: 'ORDER_95',#TODO: Do I need this? Perhaps this is just property name or resident id?
-                #})
-                #puts 'Transfer Succeeded!'
-            #end
-            #Post response to Buzz
-            resident = payment.resident
-            api_url = ENV['API_URL'].sub '${residentID}', payment.resident.buzz_id
-            begin
-                response = HTTParty.post(api_url, 
-                    body: { 
-                        unit_occupancy_id: resident.unit_occupancy_id,
-                        property_id: payment.property.buzz_id,
-                        status: payment.status,
-                        amount: payment.amount,
-                        created_at: payment.created_at
-                    }.to_json, 
-                    headers: { 'Content-Type' => 'application/json' })
-            rescue => e
-                render json: {error: "An unexpected error occurred."}, status: :internal_server_error
-            end
-            puts 'Payment Succeeded!'
         when 'payment_intent.created'
             puts "PAYMENT INTENT PROCESSESING"
             amount = event.data.object.amount/100
