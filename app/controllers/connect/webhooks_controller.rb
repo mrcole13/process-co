@@ -19,25 +19,20 @@ class Connect::WebhooksController < ApplicationController
         end
         # Handle the event
         case event.type        
-        when 'account.application.authorized'
-            stripe_id = event.account
-            property = Property.find_by(stripe_id: stripe_id)
-            if !property.present?
-                property = Property.new(stripe_id: stripe_id)
-                property.transfers = event.data.object.capabilities.transfers
-                property.name = event.data.object.business_profile.name
-                property.save
-            end  
-            puts 'Property Connected Successfully'
-        when 'account.updated', 'account.external_account.updated'
-            stripe_id = event.account
-            property = Property.find_by(stripe_id: stripe_id)
-            if property.present?
-              property.name = event.data.object.business_profile.name
+        when 'account.application.authorized', 'account.updated', 'account.external_account.updated'
+          stripe_id = event.account
+          property = Property.find_by(stripe_id: stripe_id)
+          if !property.present?
+              property = Property.new(stripe_id: stripe_id)
               property.transfers = event.data.object.capabilities.transfers
+              property.name = event.data.object.business_profile.name
               property.save
-            end
-            puts 'Property Updated Successfully'
+          else
+            property.name = event.data.object.business_profile.name
+            property.transfers = event.data.object.capabilities.transfers
+            property.save
+          end  
+          puts 'Property Connected Successfully'
         end
     
         render json: { message: :success }
