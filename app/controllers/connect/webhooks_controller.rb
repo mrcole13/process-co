@@ -29,6 +29,15 @@ class Connect::WebhooksController < ApplicationController
                 property.save
             end  
             puts 'Property Connected Successfully'
+        when 'account.updated', 'account.external_account.updated'
+            stripe_id = event.account
+            property = Property.find_by(stripe_id: stripe_id)
+            if property.present?
+              stripe_account = Stripe::Account.retrieve(stripe_id)
+              property.name = stripe_account.business_profile.name
+              property.save
+            end
+            puts 'Property Updated Successfully'
         end
     
         render json: { message: :success }
