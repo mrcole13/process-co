@@ -21,6 +21,11 @@ class Api::V1::PaymentsController < ApplicationController
       email = PropertyMissingMailer.missing_property_email(property_id)
       puts email
       return render json: {error: 'Property has not been connected yet'}, status: :internal_server_error
+    elsif property.transfers != "active"
+      #send email letting team know that property isn't ready for transfers
+      email = PropertyMissingMailer.transfers_not_enabled(property_id)
+      puts email
+      return render json: {error: 'Property is not yet ready to accept transfers'}, status: :internal_server_error
     end
 
     #find or create Resident with the id passed in
