@@ -24,8 +24,7 @@ class Connect::WebhooksController < ApplicationController
           property = Property.find_by(stripe_id: stripe_id)
           if !property.present?
               property = Property.new(stripe_id: stripe_id)
-              property.transfers = event.data.object.capabilities.transfers
-              property.name = event.data.object.business_profile.name
+              property.transfers = 'inactive'
               property.save
           else
             property.name = event.data.object.business_profile.name
