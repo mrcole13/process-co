@@ -46,16 +46,18 @@ class Api::V1::PaymentsController < ApplicationController
     end
     product_name = payment_to + property.name
     #Create Stripe price object
+    puts (amount.to_f.round(2) * 100).to_i
+
     begin
       price = Stripe::Price.create({
           currency: 'usd',
-          unit_amount: amount.to_i * 100,
+          unit_amount: (amount.to_f.round(2) * 100).to_i,
           product_data: {name: product_name},
         })
       #Create PaymentLink via Stripe w/ property as destination
-      fee = amount.to_i * property.fee_percentage.to_i/100
+      fee = amount.to_f * property.fee_percentage.to_i/100
       if property.property_manager.present?
-        fee = fee + (amount.to_i * property.property_manager.fee_percentage.to_i/100)
+        fee = fee.round(2) + (amount.to_f.round(2) * property.property_manager.fee_percentage.to_i/100)
       end
       #TODO: add processesing/transaction fee amount
       response = Stripe::PaymentLink.create({
@@ -71,7 +73,7 @@ class Api::V1::PaymentsController < ApplicationController
           resident_last_name: params[:last_name],
           resident_email: params[:email],          
         },
-        application_fee_amount: fee * 100,
+        application_fee_amount: (fee.round(2) * 100).to_i,
         transfer_data: {destination: property.stripe_id},
       })
       #Save payment object to DB
