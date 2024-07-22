@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2024_07_15_180435) do
+ActiveRecord::Schema[7.2].define(version: 2024_07_22_164010) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -24,7 +24,7 @@ ActiveRecord::Schema[7.2].define(version: 2024_07_15_180435) do
     t.boolean "is_full_payment"
     t.bigint "property_id", null: false
     t.bigint "resident_id", null: false
-    t.integer "fee"
+    t.decimal "fee", precision: 8, scale: 2
     t.index ["property_id"], name: "index_payments_on_property_id"
     t.index ["resident_id"], name: "index_payments_on_resident_id"
   end
