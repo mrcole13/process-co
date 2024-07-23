@@ -34,7 +34,7 @@ class Api::V1::PaymentsController < ApplicationController
       resident = Resident.new(buzz_id: resident_id)
       resident.email = params[:email]
       resident.first_name = params[:first_name]
-      resident.last_name = params[:first_name]
+      resident.last_name = params[:last_name]
       resident.unit_occupancy_id = params[:unit_occupancy_id]
       resident.property = property
       resident.save!
