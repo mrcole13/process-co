@@ -19,14 +19,18 @@ class WebhooksController < ApplicationController
         end
         # Handle the event
         case event.type
-        when 'checkout.session.async_payment_succeeded', 'checkout.session.completed'
+        when 'checkout.session.async_payment_succeeded', 'checkout.session.completed', 'checkout.session.async_payment_failed'
             event_object = event.data.object
-            if event_object.payment_status == 'paid'
-                payment = Payment.find_by(link_id: event_object.payment_link)
-                if payment.present?
-                    payment.status = event_object.payment_status
-                    payment.save
-                end
+            #set payment status, if async failed, update to failed
+            payment_status = event_object.payment_status
+            if event.type == 'checkout.session.async_payment_failed'
+                payment_status = 'failed'
+            end            
+
+            payment = Payment.find_by(link_id: event_object.payment_link)
+            if payment.present?
+                payment.status = payment_status
+                payment.save
                 #Transfer money to property management connected account, if exists
                 #This will happen on a monthly reconciliation basis
                 #property = payment.property    
@@ -40,6 +44,7 @@ class WebhooksController < ApplicationController
                     #})
                     #puts 'Transfer Succeeded!'
                 #end
+                
                 #Post response to Buzz
                 resident = payment.resident
                 api_url = ENV['API_URL'].sub '${residentID}', payment.resident.buzz_id
@@ -57,7 +62,9 @@ class WebhooksController < ApplicationController
                     render json: {error: "An unexpected error occurred."}, status: :internal_server_error
                 end
                 puts 'Payment Succeeded!'
-            end
+            else
+                render json: {error: "Payment with this ID does not exist"}, status: :internal_server_error
+            end            
         when 'payment_intent.created'
             puts "PAYMENT INTENT PROCESSESING"
             amount = event.data.object.amount/100
