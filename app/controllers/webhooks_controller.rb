@@ -26,7 +26,9 @@ class WebhooksController < ApplicationController
             if event.type == 'checkout.session.async_payment_failed'
                 payment_status = 'failed'
             end            
-
+            puts "****"
+            puts payment_status
+            puts "****"
             payment = Payment.find_by(link_id: event_object.payment_link)
             if payment.present?
                 payment.status = payment_status
@@ -60,12 +62,13 @@ class WebhooksController < ApplicationController
                         headers: { 'Content-Type' => 'application/json' })
                 rescue => e
                     render json: {error: "An unexpected error occurred."}, status: :internal_server_error
+                    return
                 end
                 puts 'Payment Succeeded!'
             else
                 render json: {error: "Payment with this ID does not exist"}, status: :internal_server_error
-            end 
-            return           
+                return
+            end         
         when 'payment_intent.created'
             puts "PAYMENT INTENT PROCESSESING"
             amount = event.data.object.amount/100
@@ -81,6 +84,7 @@ class WebhooksController < ApplicationController
         end
     
         render json: { message: :success }
+        return
     end
 
     private 
