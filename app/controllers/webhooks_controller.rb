@@ -44,7 +44,7 @@ class WebhooksController < ApplicationController
                     #})
                     #puts 'Transfer Succeeded!'
                 #end
-                
+
                 #Post response to Buzz
                 resident = payment.resident
                 api_url = ENV['API_URL'].sub '${residentID}', payment.resident.buzz_id
@@ -64,7 +64,8 @@ class WebhooksController < ApplicationController
                 puts 'Payment Succeeded!'
             else
                 render json: {error: "Payment with this ID does not exist"}, status: :internal_server_error
-            end            
+            end 
+            return           
         when 'payment_intent.created'
             puts "PAYMENT INTENT PROCESSESING"
             amount = event.data.object.amount/100
