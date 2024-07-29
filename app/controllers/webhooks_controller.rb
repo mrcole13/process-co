@@ -49,7 +49,7 @@ class WebhooksController < ApplicationController
                 api_url = ENV['API_URL'].sub '${residentID}', payment.resident.buzz_id
                 #get payment type
                 payment_intent = Stripe::PaymentIntent.retrieve(event_object.payment_intent)
-                puts payment_intent.payment_method_types
+                puts payment_intent.payment_method_types.first
                 begin
                     response = HTTParty.post(api_url, 
                         body: { 
