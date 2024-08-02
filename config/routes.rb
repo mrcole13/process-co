@@ -3,6 +3,7 @@ Rails.application.routes.draw do
     namespace :v1 do
       resources :properties, only: [:index, :show, :create]
       post "payments/payment_link", to: "payments#payment_link"
+      post "properties/create_property", to: "properties#create_property"
       resources :payments, only: [:index, :show, :create]
     end
   end
