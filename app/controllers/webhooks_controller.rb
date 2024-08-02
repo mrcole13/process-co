@@ -55,6 +55,7 @@ class WebhooksController < ApplicationController
                         body: { 
                             unit_occupancy_id: resident.unit_occupancy_id,
                             property_id: payment.property.buzz_id,
+                            resident_id: resident.buzz_id,
                             status: payment.status,
                             link_id: payment.link_id,
                             payment_method: payment_method,
