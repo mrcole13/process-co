@@ -47,12 +47,18 @@ class WebhooksController < ApplicationController
                 #Post response to Buzz
                 resident = payment.resident
                 api_url = ENV['API_URL'].sub '${residentID}', payment.resident.buzz_id
+                #get payment type
+                payment_intent = Stripe::PaymentIntent.retrieve(event_object.payment_intent)
+                payment_method = payment_intent.payment_method_types.first
                 begin
                     response = HTTParty.post(api_url, 
                         body: { 
                             unit_occupancy_id: resident.unit_occupancy_id,
                             property_id: payment.property.buzz_id,
+                            resident_id: resident.buzz_id,
                             status: payment.status,
+                            link_id: payment.link_id,
+                            payment_method: payment_method,
                             amount: payment.amount,
                             created_at: payment.created_at
                         }.to_json, 

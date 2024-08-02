@@ -46,7 +46,6 @@ class Api::V1::PaymentsController < ApplicationController
     end
     product_name = payment_to + property.name
     #Create Stripe price object
-    puts (amount.to_f.round(2) * 100).to_i
 
     begin
       price = Stripe::Price.create({
